@@ -1,0 +1,224 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   MAXMATRIX tokens — derived from measured Zoho ERP values.
+   Light is the default; `.dark` on <html> flips the theme.
+   Values are raw RGB channels so Tailwind opacity works.
+   ============================================================ */
+@layer base {
+  :root {
+    /* Surfaces — near-white, barely-there tints */
+    --canvas: 249 250 252;      /* #F9FAFC */
+    --surface: 255 255 255;     /* #FFFFFF */
+    --surface-2: 246 248 251;   /* #F6F8FB */
+    --surface-3: 240 243 247;   /* #F0F3F7 */
+
+    /* Hairlines — Zoho runs 0.8px at these tones */
+    --line: 231 235 240;        /* #E7EBF0 */
+    --line-strong: 218 222 229; /* #DADEE5 */
+
+    /* Text */
+    --ink: 26 26 26;            /* #1A1A1A near-black */
+    --ink-muted: 64 64 64;      /* #404040 */
+    --ink-subtle: 137 137 137;  /* #898989 */
+    --ink-invert: 255 255 255;
+
+    /* Brand red — matches the Mx mark */
+    --primary: 214 40 40;       /* #D62828 */
+    --primary-hover: 176 28 28; /* #B01C1C */
+    --primary-deep: 138 20 20;  /* #8A1414 */
+    --primary-soft: 253 236 236;/* #FDECEC tint / focus halo */
+    --primary-pale: 240 170 170;/* #F0AAAA on dark */
+
+    --teal: 15 143 138;
+
+    /* Semantic */
+    --success: 22 138 90;
+    --success-soft: 232 246 239;
+    --warning: 191 108 15;
+    --warning-soft: 253 243 230;
+    --danger: 209 60 60;
+    --danger-hover: 184 45 45;
+    --danger-soft: 253 237 237;
+
+    --shadow: 0 0 0;
+    --shadow-cool: 65 67 132;   /* Zoho's cool-tinted panel shadow */
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --canvas: 15 20 27;         /* #0F141B */
+    --surface: 22 28 37;        /* #161C25 */
+    --surface-2: 29 37 48;      /* #1D2530 */
+    --surface-3: 38 48 61;      /* #26303D */
+
+    --line: 42 53 66;           /* #2A3542 */
+    --line-strong: 56 70 86;    /* #384656 */
+
+    --ink: 233 238 244;
+    --ink-muted: 165 178 192;
+    --ink-subtle: 122 137 153;
+    --ink-invert: 255 255 255;
+
+    --primary: 235 76 76;       /* lifted red for dark contrast */
+    --primary-hover: 245 110 110;
+    --primary-deep: 214 40 40;
+    --primary-soft: 51 22 22;
+    --primary-pale: 240 170 170;
+
+    --teal: 45 166 164;
+
+    --success: 52 170 116;
+    --success-soft: 19 45 34;
+    --warning: 214 141 55;
+    --warning-soft: 52 39 20;
+    --danger: 228 96 96;
+    --danger-hover: 240 118 118;
+    --danger-soft: 55 26 26;
+
+    --shadow: 0 0 0;
+    --shadow-cool: 0 0 0;
+
+    color-scheme: dark;
+  }
+
+  html { @apply scroll-smooth; }
+
+  body {
+    @apply bg-canvas text-ink antialiased;
+  }
+
+  /* Headings run medium-weight and tight — the single biggest thing that
+     separates a real product from a template. */
+  h1, h2, h3, h4 {
+    @apply font-display tracking-display;
+    font-weight: 500;
+  }
+
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { @apply bg-canvas; }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-line-strong rounded-pill;
+    border: 3px solid rgb(var(--canvas));
+  }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-ink-subtle; }
+  ::selection { background: rgb(var(--primary) / 0.16); }
+}
+
+@layer components {
+  /* ---- Surfaces ---- */
+  .card {
+    @apply bg-surface rounded-lg shadow-card p-5;
+    border: 0.8px solid rgb(var(--line));
+  }
+  .panel {
+    @apply bg-surface rounded-lg shadow-card;
+    border: 0.8px solid rgb(var(--line));
+  }
+  .hairline { border: 0.8px solid rgb(var(--line)); }
+
+  /* ---- Buttons ---- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium
+           transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+           focus-visible:outline-none focus-visible:shadow-ring;
+  }
+  .btn-primary {
+    @apply btn text-ink-invert;
+    background: linear-gradient(90deg, rgb(var(--primary)) 0%, rgb(var(--primary-deep)) 100%);
+  }
+  .btn-primary:hover:not(:disabled) {
+    @apply shadow-glow;
+    filter: brightness(1.06);
+  }
+  .btn-gradient { @apply btn-primary; }
+
+  .btn-secondary {
+    @apply btn bg-surface text-ink hover:bg-surface-3;
+    border: 0.8px solid rgb(var(--line-strong));
+  }
+  .btn-danger {
+    @apply btn bg-danger text-ink-invert hover:bg-danger-hover;
+  }
+  .btn-ghost {
+    @apply btn text-ink-muted hover:text-ink hover:bg-surface-3;
+  }
+
+  /* ---- Forms ---- */
+  .input {
+    @apply w-full rounded-md bg-surface px-3 py-2 text-sm text-ink
+           placeholder:text-ink-subtle transition-all duration-150 focus:outline-none;
+    border: 0.8px solid rgb(var(--line-strong));
+  }
+  .input:focus {
+    border-color: rgb(var(--primary));
+    box-shadow: 0 0 0 4px rgb(var(--primary-soft));
+  }
+  .input:disabled, .input[readonly] {
+    @apply bg-surface-2 text-ink-muted;
+  }
+  select.input {
+    @apply appearance-none bg-no-repeat pr-9;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23898989' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.7rem center;
+  }
+  .label {
+    @apply block text-xs font-medium text-ink-muted mb-1.5;
+  }
+
+  /* ---- Tables ---- */
+  .table-base {
+    @apply w-full text-sm text-left;
+  }
+  .table-base th {
+    @apply px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-ink-subtle
+           bg-surface-2 sticky top-0 z-10 whitespace-nowrap;
+    border-bottom: 0.8px solid rgb(var(--line));
+  }
+  .table-base td {
+    @apply px-4 py-3 text-ink-muted align-middle;
+    border-bottom: 0.8px solid rgb(var(--line));
+  }
+  .table-base tbody tr {
+    @apply transition-colors duration-100;
+  }
+  .table-base tbody tr:hover td {
+    @apply bg-primary-soft;
+  }
+
+  /* ---- Badges ---- */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium;
+    border: 0.8px solid transparent;
+  }
+  .badge-neutral  { @apply badge bg-surface-2 text-ink-muted; border-color: rgb(var(--line)); }
+  .badge-primary  { @apply badge bg-primary-soft text-primary-hover; border-color: rgb(var(--primary) / 0.25); }
+  .badge-success  { @apply badge bg-success-soft text-success; border-color: rgb(var(--success) / 0.2); }
+  .badge-warning  { @apply badge bg-warning-soft text-warning; border-color: rgb(var(--warning) / 0.2); }
+  .badge-danger   { @apply badge bg-danger-soft text-danger; border-color: rgb(var(--danger) / 0.2); }
+
+  /* ---- Loading ---- */
+  .skeleton {
+    @apply rounded-md;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--surface-3) / 0.8) 25%,
+      rgb(var(--surface-3) / 0.35) 50%,
+      rgb(var(--surface-3) / 0.8) 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+
+  /* ---- Brand / display type ---- */
+  .brand-wordmark {
+    @apply font-display font-semibold tracking-tight text-ink;
+  }
+  .display-xl { @apply font-display tracking-display; font-weight: 500; }
+
+  /* Reveal-on-scroll helper used by the marketing page */
+  .reveal { @apply animate-fade-up; }
+}
