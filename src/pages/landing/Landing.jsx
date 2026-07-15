@@ -109,6 +109,7 @@ export default function Landing() {
                 {l.label}
               </a>
             ))}
+            <Link to="/blog" className="text-[13px] font-medium text-ink-muted hover:text-ink transition-colors">Blog</Link>
           </div>
 
           <div className="hidden md:flex items-center gap-2">
@@ -129,6 +130,7 @@ export default function Landing() {
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className="block text-sm text-ink-muted">{l.label}</a>
             ))}
+            <Link to="/blog" onClick={() => setMenuOpen(false)} className="block text-sm text-ink-muted">Blog</Link>
             <div className="flex gap-2 pt-2">
               <Link to="/login" className="btn-secondary flex-1">Login</Link>
               <Link to="/signup" className="btn-primary flex-1">Start Free</Link>
@@ -428,6 +430,7 @@ export default function Landing() {
             {navLinks.map((l) => (
               <a key={l.href} href={l.href} className="hover:text-ink transition-colors">{l.label}</a>
             ))}
+            <Link to="/blog" className="hover:text-ink transition-colors">Blog</Link>
           </div>
           <p className="text-xs text-ink-subtle">© {new Date().getFullYear()} Maxmatrix</p>
         </div>
