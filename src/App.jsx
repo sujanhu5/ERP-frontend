@@ -12,6 +12,11 @@ import Landing from './pages/landing/Landing';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 
+// Blog public pages (no auth required)
+const BlogIndex = lazy(() => import('./pages/blog/BlogIndex'));
+const BlogPost = lazy(() => import('./pages/blog/BlogPost'));
+const BlogTag = lazy(() => import('./pages/blog/BlogTag'));
+
 const AppLayout = lazy(() => import('./components/layout/AppLayout'));
 const Dashboard = lazy(() => import('./pages/dashboard/Dashboard'));
 const ProductList = lazy(() => import('./pages/products/ProductList'));
@@ -28,6 +33,13 @@ const PlatformDashboard = lazy(() => import('./pages/platform/PlatformDashboard'
 const PlatformCompanies = lazy(() => import('./pages/platform/PlatformCompanies'));
 const PlatformCompanyDetail = lazy(() => import('./pages/platform/PlatformCompanyDetail'));
 const PlatformAudit = lazy(() => import('./pages/platform/PlatformAudit'));
+
+// CMS (platform owner only)
+const CMSDashboard = lazy(() => import('./pages/cms/CMSDashboard'));
+const CMSPosts = lazy(() => import('./pages/cms/CMSPosts'));
+const CMSEditor = lazy(() => import('./pages/cms/CMSEditor'));
+const CMSCategories = lazy(() => import('./pages/cms/CMSCategories'));
+const CMSTags = lazy(() => import('./pages/cms/CMSTags'));
 
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -56,6 +68,11 @@ export default function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
 
+              {/* Public blog — no auth required */}
+              <Route path="/blog" element={<BlogIndex />} />
+              <Route path="/blog/:slug" element={<BlogPost />} />
+              <Route path="/tag/:tag" element={<BlogTag />} />
+
               {/* Platform Owner control plane — reached only by signing in as platform_owner. */}
               <Route
                 element={
@@ -68,6 +85,15 @@ export default function App() {
                 <Route path="/platform/companies" element={<PlatformCompanies />} />
                 <Route path="/platform/companies/:id" element={<PlatformCompanyDetail />} />
                 <Route path="/platform/audit" element={<PlatformAudit />} />
+
+                {/* Blog CMS */}
+                <Route path="/platform/blog" element={<CMSDashboard />} />
+                <Route path="/platform/blog/posts" element={<CMSPosts />} />
+                <Route path="/platform/blog/drafts" element={<CMSPosts filter="drafts" />} />
+                <Route path="/platform/blog/new" element={<CMSEditor />} />
+                <Route path="/platform/blog/edit/:id" element={<CMSEditor />} />
+                <Route path="/platform/blog/categories" element={<CMSCategories />} />
+                <Route path="/platform/blog/tags" element={<CMSTags />} />
               </Route>
 
               <Route

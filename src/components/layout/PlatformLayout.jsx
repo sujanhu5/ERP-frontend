@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Building2, ScrollText, LogOut, Menu, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Building2, ScrollText, LogOut, Menu, ShieldCheck, FileText, FolderOpen, Tag, Edit3, Rss } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { LogoMark } from '../common/Logo';
 
@@ -10,9 +10,24 @@ const navItems = [
   { to: '/platform/audit', label: 'Audit Log', icon: ScrollText },
 ];
 
+const cmsItems = [
+  { to: '/platform/blog', label: 'CMS Dashboard', icon: Rss, end: true },
+  { to: '/platform/blog/posts', label: 'All Posts', icon: FileText },
+  { to: '/platform/blog/drafts', label: 'Drafts', icon: Edit3 },
+  { to: '/platform/blog/categories', label: 'Categories', icon: FolderOpen },
+  { to: '/platform/blog/tags', label: 'Tags', icon: Tag },
+];
+
 const titleMap = {
   '/platform/companies': 'Companies',
   '/platform/audit': 'Audit Log',
+  '/platform/blog/new': 'New Post',
+  '/platform/blog/edit': 'Edit Post',
+  '/platform/blog/posts': 'All Posts',
+  '/platform/blog/drafts': 'Drafts',
+  '/platform/blog/categories': 'Categories',
+  '/platform/blog/tags': 'Tags',
+  '/platform/blog': 'Blog CMS',
   '/platform': 'Platform Overview',
 };
 
@@ -54,8 +69,37 @@ export default function PlatformLayout() {
           )}
         </div>
 
-        <nav className="flex-1 py-3 px-2 space-y-0.5">
+        <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
           {navItems.map(({ to, label, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              title={!open ? label : undefined}
+              className={({ isActive }) =>
+                `relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors
+                 ${open ? '' : 'justify-center'}
+                 ${isActive
+                   ? 'bg-primary-soft text-primary'
+                   : 'text-ink-muted hover:bg-surface-3 hover:text-ink'}`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-primary" />}
+                  <Icon size={17} className="shrink-0" />
+                  {open && label}
+                </>
+              )}
+            </NavLink>
+          ))}
+
+          {open && (
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-subtle px-3 pt-4 pb-1">
+              Blog CMS
+            </p>
+          )}
+          {cmsItems.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}
               to={to}

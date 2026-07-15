@@ -106,3 +106,35 @@ export const userService = {
   update: (id, payload) => api.put(`/users/${id}`, payload),
   remove: (id) => api.delete(`/users/${id}`),
 };
+
+// ── Blog CMS ──────────────────────────────────────────────────────────────────
+export const blogPublicService = {
+  posts: (params) => api.get('/blog/public/posts', { params }),
+  post: (slug) => api.get(`/blog/public/posts/${slug}`),
+  like: (slug) => api.post(`/blog/public/posts/${slug}/like`),
+  categories: () => api.get('/blog/public/categories'),
+  tags: () => api.get('/blog/public/tags'),
+};
+
+export const blogAdminService = {
+  stats: () => api.get('/blog/admin/stats'),
+  // Posts
+  posts: (params) => api.get('/blog/admin/posts', { params }),
+  post: (id) => api.get(`/blog/admin/posts/${id}`),
+  create: (formData) => api.post('/blog/admin/posts', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  update: (id, formData) => api.put(`/blog/admin/posts/${id}`, formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  remove: (id) => api.delete(`/blog/admin/posts/${id}`),
+  bulk: (action, ids) => api.post('/blog/admin/posts/bulk', { action, ids }),
+  // Categories
+  categories: () => api.get('/blog/admin/categories'),
+  createCategory: (payload) => api.post('/blog/admin/categories', payload),
+  updateCategory: (id, payload) => api.put(`/blog/admin/categories/${id}`, payload),
+  deleteCategory: (id) => api.delete(`/blog/admin/categories/${id}`),
+  // Tags
+  tags: () => api.get('/blog/admin/tags'),
+  deleteTag: (id) => api.delete(`/blog/admin/tags/${id}`),
+  // Media
+  images: (params) => api.get('/blog/admin/images', { params }),
+  uploadImage: (formData) => api.post('/blog/admin/images', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  deleteImage: (id) => api.delete(`/blog/admin/images/${id}`),
+};
