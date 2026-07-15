@@ -128,7 +128,7 @@ export default function Signup() {
       setTimeout(() => navigate('/dashboard'), 2200);
     } catch (err) {
       const details = err.response?.data?.details;
-      const msg = details?.[0]?.msg || err.response?.data?.message || 'Signup failed. Please try again.';
+      const msg = details?.[0]?.msg || err.response?.data?.message || err.message || 'Signup failed. Please try again.';
       toast.error(msg);
     } finally {
       setLoading(false);
