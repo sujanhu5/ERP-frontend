@@ -34,6 +34,7 @@ export default function CMSEditor() {
       setContentJson(p.content_json);
       setSettings({
         status: p.status,
+        slug: p.slug,
         categoryId: p.category_id,
         featuredImage: p.featured_image,
         excerpt: p.excerpt,
@@ -73,12 +74,29 @@ export default function CMSEditor() {
     setSaving(true);
     try {
       const fd = buildFormData();
+      // Allow callers to force a status override (e.g. Publish button)
+      if (opts.status) {
+        fd.set('status', opts.status);
+        if (opts.status === 'published') fd.set('publishedAt', new Date().toISOString());
+      }
       if (isEdit) {
         await blogAdminService.update(id, fd);
-        if (!opts.silent) toast.success('Post updated.');
+        if (!opts.silent) {
+          if (opts.status === 'published') {
+            setSettings((s) => ({ ...s, status: 'published' }));
+            toast.success('Post published!');
+          } else {
+            toast.success('Post updated.');
+          }
+        }
       } else {
         const { data } = await blogAdminService.create(fd);
-        toast.success('Post created!');
+        if (opts.status === 'published') {
+          setSettings((s) => ({ ...s, status: 'published' }));
+          toast.success('Post published!');
+        } else {
+          toast.success('Post created!');
+        }
         navigate(`/platform/blog/edit/${data.data.id}`, { replace: true });
       }
       setDirty(false);
@@ -145,14 +163,35 @@ export default function CMSEditor() {
             <Images size={14} /> Media
           </button>
           {settings.status === 'published' && (
-            <a href={`/blog/${id}`} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
-              <Eye size={14} /> Preview
+            <a href={`/blog/${settings.slug || id}`} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
+              <Eye size={14} /> View
             </a>
           )}
-          <button onClick={() => save()} disabled={saving} className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5 min-w-[80px]">
+          {/* Save Draft — always available */}
+          <button onClick={() => save()} disabled={saving} className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? 'Saving…' : 'Save Draft'}
           </button>
+          {/* Publish / Update */}
+          {settings.status !== 'published' ? (
+            <button
+              onClick={() => save({ status: 'published' })}
+              disabled={saving}
+              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
+              Publish
+            </button>
+          ) : (
+            <button
+              onClick={() => save()}
+              disabled={saving}
+              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5"
+            >
+              {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+              {saving ? 'Saving…' : 'Update'}
+            </button>
+          )}
         </div>
       </div>
 
