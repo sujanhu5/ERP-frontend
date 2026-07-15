@@ -406,15 +406,15 @@ export default function Landing() {
               Start Free <ArrowRight size={16} />
             </Link>
             <a
-              href="mailto:hello@maxmatrix.in"
+              href="mailto:max0matrixx@gmail.com"
               className="btn !px-6 !py-2.5 w-full sm:w-auto bg-white/10 text-white border border-white/20 hover:bg-white/15 dark:bg-surface-2 dark:text-ink dark:border-line dark:hover:bg-surface-3"
             >
               Book Demo
             </a>
           </div>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-x-8 gap-y-2 mt-9 text-[13px] text-white/50 dark:text-ink-subtle">
-            <span className="inline-flex items-center gap-2"><Mail size={13} /> hello@maxmatrix.in</span>
-            <span className="inline-flex items-center gap-2"><Phone size={13} /> +91 98765 43210</span>
+            <span className="inline-flex items-center gap-2"><Mail size={13} /> max0matrixx@gmail.com</span>
+            <span className="inline-flex items-center gap-2"><Phone size={13} /> +91 73491 69925</span>
             <span className="inline-flex items-center gap-2"><MapPin size={13} /> Bengaluru, India</span>
           </div>
         </div>
