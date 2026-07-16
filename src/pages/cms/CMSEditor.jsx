@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Eye, Loader2, Upload, X,
   Tag, FolderOpen, FileText, Star, Pin, Globe, Edit3,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, GripVertical,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BlogEditor from '../../components/editor/BlogEditor';
@@ -71,7 +71,29 @@ export default function CMSEditor() {
   const [imgUploading, setImgUploading] = useState(false);
   const [showMedia, setShowMedia]     = useState(false);
   const [dirty, setDirty]             = useState(false);
-  const titleRef = useRef(null);
+  const [sidebarWidth, setSidebarWidth] = useState(272);
+  const titleRef    = useRef(null);
+  const dragRef     = useRef({ dragging: false, startX: 0, startWidth: 0 });
+
+  const onDragStart = (e) => {
+    dragRef.current = { dragging: true, startX: e.clientX, startWidth: sidebarWidth };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    const onMove = (ev) => {
+      if (!dragRef.current.dragging) return;
+      const delta = dragRef.current.startX - ev.clientX;
+      setSidebarWidth(Math.min(520, Math.max(200, dragRef.current.startWidth + delta)));
+    };
+    const onUp = () => {
+      dragRef.current.dragging = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
 
   // Load categories
   useEffect(() => {
@@ -333,8 +355,17 @@ export default function CMSEditor() {
           </div>
         </div>
 
+        {/* ── Drag handle ──────────────────────────────────── */}
+        <div
+          onMouseDown={onDragStart}
+          className="group w-1.5 shrink-0 bg-line hover:bg-primary/40 cursor-col-resize transition-colors relative flex items-center justify-center"
+          title="Drag to resize"
+        >
+          <GripVertical size={12} className="text-ink-subtle opacity-0 group-hover:opacity-100 transition-opacity absolute" />
+        </div>
+
         {/* ── Settings sidebar ─────────────────────────────── */}
-        <aside className="w-64 xl:w-72 shrink-0 bg-surface border-l border-line flex flex-col overflow-y-auto">
+        <aside style={{ width: sidebarWidth }} className="shrink-0 bg-surface border-l border-line flex flex-col overflow-y-auto">
           <div className="px-4 py-3.5 border-b border-line shrink-0">
             <p className="text-[13px] font-semibold text-ink">Post Settings</p>
           </div>
