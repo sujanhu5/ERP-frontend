@@ -288,21 +288,22 @@ export default function CMSEditor() {
           {/* Featured image zone */}
           <div className="px-8 pt-6 shrink-0">
             {settings.featuredImage ? (
-              /* Preview */
-              <div className="mb-5">
-                <div className="relative rounded-xl overflow-hidden bg-surface-2 group" style={{ aspectRatio: '16/7', maxHeight: 280 }}>
-                  <img src={resolveMediaUrl(settings.featuredImage)} alt="Featured" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                    <label className="btn-secondary !text-xs cursor-pointer gap-1.5 !bg-white/90 !text-ink">
-                      <Upload size={12} /> Change
-                      <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
-                    </label>
-                    <button onClick={() => patch({ featuredImage: '' })}
-                      className="btn-secondary !text-xs gap-1.5 !bg-white/90 !text-danger">
-                      <X size={12} /> Remove
-                    </button>
-                  </div>
+              /* Compact strip — keeps writing space free */
+              <div className="flex items-center gap-3 mb-4 px-3 py-2 rounded-xl bg-surface-2 border border-line">
+                <div className="w-14 h-10 rounded-lg overflow-hidden bg-surface shrink-0">
+                  <img src={resolveMediaUrl(settings.featuredImage)} alt="" className="w-full h-full object-cover" />
                 </div>
+                <p className="flex-1 text-[12px] text-ink-muted truncate min-w-0">
+                  {settings.featuredImage.startsWith('http') ? settings.featuredImage : 'Local upload'}
+                </p>
+                <label className="btn-secondary !py-1 !px-2.5 !text-[11px] cursor-pointer gap-1 shrink-0">
+                  <Upload size={10} /> Change
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                </label>
+                <button onClick={() => patch({ featuredImage: '' })}
+                  className="btn-ghost !p-1.5 text-ink-subtle hover:text-danger shrink-0" title="Remove image">
+                  <X size={14} />
+                </button>
               </div>
             ) : (
               /* Upload zone + URL paste */
