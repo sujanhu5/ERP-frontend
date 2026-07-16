@@ -38,7 +38,11 @@ export default function TableOfContents({ content }) {
   if (!headings.length) return null;
 
   const scrollTo = (id) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    if (!el) return;
+    const navHeight = 72; // sticky nav h-14 (56px) + breathing room
+    const y = el.getBoundingClientRect().top + window.scrollY - navHeight;
+    window.scrollTo({ top: y, behavior: 'smooth' });
     setMobileOpen(false);
   };
 

@@ -47,11 +47,16 @@ function Row({ label, value }) {
 
 function SetPasswordModal({ user, onClose }) {
   const [pw, setPw] = useState('');
-  const [show, setShow] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [copied, setCopied] = useState(false);
   const inputRef = useRef(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const copy = () => {
+    navigator.clipboard.writeText(pw).then(() => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -59,8 +64,7 @@ function SetPasswordModal({ user, onClose }) {
     setSaving(true);
     try {
       await platformService.setUserPassword(user.id, pw);
-      toast.success(`Password updated for ${user.name}. They'll see a "contact service provider" prompt on next login.`);
-      onClose();
+      setDone(true);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update password.');
     } finally { setSaving(false); }
@@ -75,37 +79,55 @@ function SetPasswordModal({ user, onClose }) {
               <KeyRound size={15} className="text-warning" />
             </div>
             <div>
-              <p className="text-[13px] font-semibold text-ink">Set New Password</p>
+              <p className="text-[13px] font-semibold text-ink">{done ? 'Password Updated' : 'Set New Password'}</p>
               <p className="text-[11px] text-ink-subtle truncate max-w-[200px]">{user.name} · {user.email}</p>
             </div>
           </div>
           <button onClick={onClose} className="btn-ghost !p-1.5"><X size={15} /></button>
         </div>
-        <p className="text-[12px] text-ink-muted mb-4 bg-warning-soft/40 border border-warning/20 rounded-lg px-3 py-2">
-          The user will see a "contact service provider" message if they try their old password, and be prompted to get the new one from you.
-        </p>
-        <form onSubmit={submit} className="space-y-3">
-          <div className="relative">
-            <input
-              ref={inputRef}
-              type={show ? 'text' : 'password'}
-              className="input !text-[13px] pr-10"
-              placeholder="New password (min 6 chars)"
-              value={pw}
-              onChange={(e) => setPw(e.target.value)}
-            />
-            <button type="button" onClick={() => setShow((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-ink-subtle hover:text-ink">
-              {show ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
+
+        {done ? (
+          <div className="space-y-4">
+            <p className="text-[12px] text-ink-muted bg-success-soft/40 border border-success/20 rounded-lg px-3 py-2">
+              Password set. Share it with the user — if they try their old password they'll see "contact service provider".
+            </p>
+            <div>
+              <p className="text-[11px] text-ink-subtle mb-1.5">New password (copy before closing):</p>
+              <div className="flex items-center gap-2 bg-surface-2 border border-line rounded-lg px-3 py-2.5">
+                <span className="flex-1 font-mono text-[15px] font-semibold text-ink tracking-wide select-all">{pw}</span>
+                <button onClick={copy} className="btn-secondary !py-1 !px-2.5 !text-[11px] shrink-0">
+                  {copied ? 'Copied!' : 'Copy'}
+                </button>
+              </div>
+            </div>
+            <button onClick={onClose} className="btn-primary w-full !text-xs">Done</button>
           </div>
-          <div className="flex gap-2 pt-1">
-            <button type="button" onClick={onClose} className="btn-secondary flex-1 !text-xs">Cancel</button>
-            <button type="submit" disabled={saving} className="btn-primary flex-1 !text-xs gap-1.5">
-              <KeyRound size={12} /> {saving ? 'Saving…' : 'Set Password'}
-            </button>
-          </div>
-        </form>
+        ) : (
+          <>
+            <p className="text-[12px] text-ink-muted mb-4 bg-warning-soft/40 border border-warning/20 rounded-lg px-3 py-2">
+              The user will see a "contact service provider" message if they try their old password.
+            </p>
+            <form onSubmit={submit} className="space-y-3">
+              <div>
+                <p className="text-[11px] text-ink-subtle mb-1.5">New password (visible so you can note it down):</p>
+                <input
+                  ref={inputRef}
+                  type="text"
+                  className="input !text-[14px] font-mono tracking-wide"
+                  placeholder="Min 6 characters"
+                  value={pw}
+                  onChange={(e) => setPw(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button type="button" onClick={onClose} className="btn-secondary flex-1 !text-xs">Cancel</button>
+                <button type="submit" disabled={saving} className="btn-primary flex-1 !text-xs gap-1.5">
+                  <KeyRound size={12} /> {saving ? 'Saving…' : 'Set Password'}
+                </button>
+              </div>
+            </form>
+          </>
+        )}
       </div>
     </div>
   );

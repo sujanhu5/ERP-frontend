@@ -191,9 +191,9 @@ export default function BlogPost() {
 
       {/* Nav */}
       <nav className="sticky top-0 z-40 backdrop-blur-md bg-[#0A0F1A]/80 border-b border-white/[0.07]">
-        <div className="max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link to="/blog" className="flex items-center gap-2 text-white/60 hover:text-white transition-colors text-[13px]">
-            <ArrowLeft size={15} /> Blog
+        <div className="max-w-6xl mx-auto px-4 sm:px-5 h-14 flex items-center justify-between gap-3">
+          <Link to="/blog" className="flex items-center gap-1.5 text-white/60 hover:text-white transition-colors text-[13px] shrink-0">
+            <ArrowLeft size={15} /> <span className="hidden sm:inline">Blog</span>
           </Link>
           <Link to="/"><Logo size="sm" onDark /></Link>
           <ShareButtons title={post.title} />
@@ -201,39 +201,39 @@ export default function BlogPost() {
       </nav>
 
       {/* Content layout */}
-      <div className="max-w-6xl mx-auto px-5 py-10">
+      <div className="max-w-6xl mx-auto px-4 sm:px-5 py-6 sm:py-10 pb-24 sm:pb-10">
         <div className="flex gap-12 justify-center">
 
           {/* Article */}
           <article className="flex-1 min-w-0 max-w-[740px]">
 
             {/* Meta */}
-            <div className="mb-6">
+            <div className="mb-5">
               {post.category_name && (
                 <span
-                  className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide mb-4"
+                  className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide mb-3"
                   style={{ background: `${post.category_color || '#D62828'}20`, color: post.category_color || '#EB4C4C', border: `1px solid ${post.category_color || '#D62828'}40` }}
                 >
                   {post.category_name}
                 </span>
               )}
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug mb-5">
+              <h1 className="text-[26px] sm:text-4xl font-bold tracking-tight leading-tight mb-4">
                 {post.title}
               </h1>
               {post.excerpt && (
-                <p className="text-white/60 text-[18px] leading-relaxed mb-6">{post.excerpt}</p>
+                <p className="text-white/60 text-[15px] sm:text-[18px] leading-relaxed mb-5">{post.excerpt}</p>
               )}
-              <div className="flex flex-wrap items-center gap-4 text-white/40 text-[13px] pb-6 border-b border-white/[0.08]">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-white/40 text-[12px] sm:text-[13px] pb-5 border-b border-white/[0.08]">
                 {post.author_name && (
                   <span className="flex items-center gap-1.5">
-                    <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[10px] font-bold">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[9px] sm:text-[10px] font-bold">
                       {post.author_name[0]}
                     </div>
                     {post.author_name}
                   </span>
                 )}
-                <span className="flex items-center gap-1"><Calendar size={12} />{formatDate(post.published_at)}</span>
-                <span className="flex items-center gap-1"><Clock size={12} />{post.reading_time_minutes} min read</span>
+                <span className="flex items-center gap-1"><Calendar size={11} />{formatDate(post.published_at)}</span>
+                <span className="flex items-center gap-1"><Clock size={11} />{post.reading_time_minutes} min read</span>
                 {post.tags?.length > 0 && (
                   <div className="flex items-center gap-1 flex-wrap">
                     {post.tags.map((t) => (
@@ -247,9 +247,9 @@ export default function BlogPost() {
               </div>
             </div>
 
-            {/* Featured image */}
+            {/* Featured image — edge-to-edge on mobile */}
             {post.featured_image && (
-              <div className="rounded-xl overflow-hidden mb-8 aspect-video bg-[#0E1B2C]">
+              <div className="-mx-4 sm:mx-0 sm:rounded-xl overflow-hidden mb-7 aspect-video bg-[#0E1B2C]">
                 <img src={resolveMediaUrl(post.featured_image)} alt={post.title} className="w-full h-full object-cover" />
               </div>
             )}
@@ -261,7 +261,7 @@ export default function BlogPost() {
             />
 
             {/* Like + Share */}
-            <div className="mt-12 pt-8 border-t border-white/[0.08] flex items-center justify-between flex-wrap gap-4">
+            <div className="mt-10 pt-6 border-t border-white/[0.08] flex items-center justify-between flex-wrap gap-3">
               <button
                 onClick={handleLike}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-[13px]
@@ -275,14 +275,14 @@ export default function BlogPost() {
 
             {/* Author card */}
             {post.author_name && (
-              <div className="mt-10 p-6 rounded-xl bg-white/[0.03] border border-white/[0.07]">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary text-lg font-bold shrink-0">
+              <div className="mt-8 p-5 rounded-xl bg-white/[0.03] border border-white/[0.07]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-primary/20 flex items-center justify-center text-primary text-base sm:text-lg font-bold shrink-0">
                     {post.author_name[0]}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{post.author_name}</p>
-                    <p className="text-[13px] text-white/50">Maxmatrix Team</p>
+                    <p className="font-semibold text-white text-[14px]">{post.author_name}</p>
+                    <p className="text-[12px] text-white/50">Maxmatrix Team</p>
                   </div>
                 </div>
               </div>
@@ -296,30 +296,30 @@ export default function BlogPost() {
               href={INSTA_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-12 flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-orange-900/30 border border-pink-500/20 hover:border-pink-500/40 transition-all group"
+              className="mt-10 flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-orange-900/30 border border-pink-500/20 hover:border-pink-500/40 transition-all group"
             >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
-                <InstagramIcon size={22} />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <InstagramIcon size={20} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold text-white">Follow us on Instagram</p>
-                <p className="text-[12px] text-white/50 mt-0.5">@maxmatrix.in · Updates, tips &amp; behind the scenes</p>
+                <p className="text-[13px] sm:text-[14px] font-semibold text-white">Follow us on Instagram</p>
+                <p className="text-[11px] sm:text-[12px] text-white/50 mt-0.5">@maxmatrix.in · Updates, tips &amp; behind the scenes</p>
               </div>
-              <span className="text-[12px] text-pink-400 font-medium shrink-0 group-hover:underline">Follow →</span>
+              <span className="text-[12px] text-pink-400 font-medium shrink-0 group-hover:underline hidden sm:inline">Follow →</span>
             </a>
 
             {/* Related posts */}
             {related.length > 0 && (
-              <div className="mt-16">
-                <h2 className="text-[18px] font-bold mb-6 text-white">Related Posts</h2>
-                <div className="grid sm:grid-cols-2 gap-5">
+              <div className="mt-14">
+                <h2 className="text-[17px] sm:text-[18px] font-bold mb-5 text-white">Related Posts</h2>
+                <div className="grid sm:grid-cols-2 gap-4 sm:gap-5">
                   {related.slice(0, 4).map((p) => <BlogCard key={p.id} post={p} />)}
                 </div>
               </div>
             )}
 
             {/* Back nav */}
-            <div className="mt-12 pt-8 border-t border-white/[0.08] flex justify-between">
+            <div className="mt-10 pt-6 border-t border-white/[0.08]">
               <Link to="/blog" className="flex items-center gap-2 text-[13px] text-white/40 hover:text-white transition-colors">
                 <ArrowLeft size={15} /> Back to Blog
               </Link>
@@ -332,7 +332,7 @@ export default function BlogPost() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] mt-20 py-8 text-center text-white/30 text-[12px]">
+      <footer className="border-t border-white/[0.06] mt-16 sm:mt-20 py-8 text-center text-white/30 text-[12px]">
         <div className="flex items-center justify-center gap-4 mb-3">
           <a href={INSTA_URL} target="_blank" rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-white/30 hover:text-pink-400 transition-colors">
