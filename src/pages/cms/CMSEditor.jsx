@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Eye, Loader2, Upload, X,
   Tag, FolderOpen, FileText, Star, Pin, Globe, Edit3,
-  ChevronDown, ChevronUp, GripVertical,
+  ChevronDown, ChevronUp, GripVertical, Clock, Calendar,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BlogEditor from '../../components/editor/BlogEditor';
@@ -71,6 +71,7 @@ export default function CMSEditor() {
   const [imgUploading, setImgUploading] = useState(false);
   const [showMedia, setShowMedia]     = useState(false);
   const [dirty, setDirty]             = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [sidebarWidth, setSidebarWidth] = useState(272);
   const titleRef    = useRef(null);
   const dragRef     = useRef({ dragging: false, startX: 0, startWidth: 0 });
@@ -242,10 +243,18 @@ export default function CMSEditor() {
         <div className="flex items-center gap-2 shrink-0">
           {dirty && <span className="text-[11px] text-ink-subtle hidden md:block">Unsaved</span>}
 
+          <button
+            onClick={() => setShowPreview(true)}
+            className="btn-ghost !py-1.5 !px-3 !text-xs gap-1.5"
+            title="Preview post"
+          >
+            <Eye size={13} /> Preview
+          </button>
+
           {isPublished && (
             <a href={`/blog/${settings.slug}`} target="_blank" rel="noopener noreferrer"
               className="btn-ghost !py-1.5 !px-3 !text-xs gap-1.5" title="View live post">
-              <Eye size={13} /> View
+              <Globe size={13} /> View Live
             </a>
           )}
 
@@ -483,6 +492,76 @@ export default function CMSEditor() {
           onSelect={(url) => { navigator.clipboard?.writeText(url); toast.success('Image URL copied — paste into editor.'); }}
           onClose={() => setShowMedia(false)}
         />
+      )}
+
+      {/* ── Preview overlay ───────────────────────────────────── */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-[#0A0F1A] text-white">
+          {/* Preview top bar */}
+          <div className="sticky top-0 z-10 flex items-center justify-between px-5 h-12 bg-[#0A0F1A]/90 backdrop-blur border-b border-white/[0.07]">
+            <div className="flex items-center gap-2 text-[12px] text-white/40">
+              <span className="px-2 py-0.5 rounded-full bg-warning/10 text-warning border border-warning/20 text-[11px] font-medium">Preview — not published</span>
+            </div>
+            <button
+              onClick={() => setShowPreview(false)}
+              className="flex items-center gap-1.5 text-[12px] text-white/50 hover:text-white transition-colors"
+            >
+              <X size={14} /> Close preview
+            </button>
+          </div>
+
+          {/* Article */}
+          <div className="max-w-3xl mx-auto px-5 py-12">
+            {/* Meta */}
+            <div className="mb-6">
+              {settings.categoryId && categories.find(c => c.id === settings.categoryId) && (
+                <span className="inline-block px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-wide mb-4 bg-primary/10 text-primary border border-primary/20">
+                  {categories.find(c => c.id === settings.categoryId)?.name}
+                </span>
+              )}
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight leading-snug mb-5 text-white">
+                {title || <span className="text-white/30 italic">No title yet…</span>}
+              </h1>
+              {settings.excerpt && (
+                <p className="text-white/60 text-[18px] leading-relaxed mb-6">{settings.excerpt}</p>
+              )}
+              <div className="flex flex-wrap items-center gap-4 text-white/40 text-[13px] pb-6 border-b border-white/[0.08]">
+                <span className="flex items-center gap-1"><Calendar size={12} />Draft preview</span>
+                <span className="flex items-center gap-1"><Clock size={12} />~1 min read</span>
+                {settings.tags?.length > 0 && (
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {settings.tags.map((t) => (
+                      <span key={t} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/[0.05] text-white/40 text-[11px]">
+                        #{t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Featured image */}
+            {settings.featuredImage && (
+              <div className="rounded-xl overflow-hidden mb-8 aspect-video bg-[#0E1B2C]">
+                <img src={resolveMediaUrl(settings.featuredImage)} alt={title} className="w-full h-full object-cover" />
+              </div>
+            )}
+
+            {/* Body */}
+            {content
+              ? <div className="blog-prose" dangerouslySetInnerHTML={{ __html: content }} />
+              : <p className="text-white/20 italic text-lg text-center py-20">Start writing to see your content here…</p>
+            }
+
+            {/* Back */}
+            <div className="mt-16 pt-8 border-t border-white/[0.08]">
+              <button onClick={() => setShowPreview(false)}
+                className="flex items-center gap-2 text-[13px] text-white/40 hover:text-white transition-colors">
+                <ArrowLeft size={15} /> Back to editor
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
