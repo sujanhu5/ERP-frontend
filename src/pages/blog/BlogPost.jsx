@@ -7,6 +7,7 @@ import TableOfContents from '../../components/blog/TableOfContents';
 import ShareButtons from '../../components/blog/ShareButtons';
 import BlogCard from '../../components/blog/BlogCard';
 import Logo from '../../components/common/Logo';
+import { resolveMediaUrl } from '../../utils/media';
 
 function formatDate(d) {
   if (!d) return '';
@@ -127,7 +128,7 @@ export default function BlogPost() {
             {/* Featured image */}
             {post.featured_image && (
               <div className="rounded-xl overflow-hidden mb-8 aspect-video bg-[#0E1B2C]">
-                <img src={post.featured_image} alt={post.title} className="w-full h-full object-cover" />
+                <img src={resolveMediaUrl(post.featured_image)} alt={post.title} className="w-full h-full object-cover" />
               </div>
             )}
 

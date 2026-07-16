@@ -9,6 +9,7 @@ import toast from 'react-hot-toast';
 import BlogEditor from '../../components/editor/BlogEditor';
 import MediaLibrary from '../../components/editor/MediaLibrary';
 import { blogAdminService } from '../../services';
+import { resolveMediaUrl } from '../../utils/media';
 
 // ── Sidebar helpers ───────────────────────────────────────────────────────────
 function Label({ children }) {
@@ -257,40 +258,57 @@ export default function CMSEditor() {
           <div className="px-8 pt-6 shrink-0">
             {settings.featuredImage ? (
               /* Preview */
-              <div className="relative rounded-xl overflow-hidden bg-surface-2 mb-5 group" style={{ aspectRatio: '16/7', maxHeight: 280 }}>
-                <img src={settings.featuredImage} alt="Featured" className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  <label className="btn-secondary !text-xs cursor-pointer gap-1.5 !bg-white/90 !text-ink">
-                    <Upload size={12} /> Change
-                    <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
-                  </label>
-                  <button onClick={() => patch({ featuredImage: '' })}
-                    className="btn-secondary !text-xs gap-1.5 !bg-white/90 !text-danger">
-                    <X size={12} /> Remove
-                  </button>
+              <div className="mb-5">
+                <div className="relative rounded-xl overflow-hidden bg-surface-2 group" style={{ aspectRatio: '16/7', maxHeight: 280 }}>
+                  <img src={resolveMediaUrl(settings.featuredImage)} alt="Featured" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                    <label className="btn-secondary !text-xs cursor-pointer gap-1.5 !bg-white/90 !text-ink">
+                      <Upload size={12} /> Change
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                    </label>
+                    <button onClick={() => patch({ featuredImage: '' })}
+                      className="btn-secondary !text-xs gap-1.5 !bg-white/90 !text-danger">
+                      <X size={12} /> Remove
+                    </button>
+                  </div>
                 </div>
               </div>
             ) : (
-              /* Upload zone */
-              <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
-                border-line hover:border-primary/40 hover:bg-primary-soft/20 cursor-pointer transition-all mb-5
-                ${imgUploading ? 'opacity-60 pointer-events-none' : ''}`}
-                style={{ height: 120 }}>
-                <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
-                {imgUploading ? (
-                  <Loader2 size={22} className="animate-spin text-primary" />
-                ) : (
-                  <>
-                    <div className="w-10 h-10 rounded-xl bg-primary-soft flex items-center justify-center">
-                      <Upload size={18} className="text-primary" />
-                    </div>
-                    <div className="text-center">
-                      <p className="text-[13px] font-medium text-ink">Add featured image</p>
-                      <p className="text-[11px] text-ink-subtle mt-0.5">Click to upload · This image shows on the blog listing page</p>
-                    </div>
-                  </>
-                )}
-              </label>
+              /* Upload zone + URL paste */
+              <div className="mb-5 space-y-2">
+                <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
+                  border-line hover:border-primary/40 hover:bg-primary-soft/20 cursor-pointer transition-all
+                  ${imgUploading ? 'opacity-60 pointer-events-none' : ''}`}
+                  style={{ height: 110 }}>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                  {imgUploading ? (
+                    <Loader2 size={22} className="animate-spin text-primary" />
+                  ) : (
+                    <>
+                      <div className="w-9 h-9 rounded-xl bg-primary-soft flex items-center justify-center">
+                        <Upload size={16} className="text-primary" />
+                      </div>
+                      <div className="text-center">
+                        <p className="text-[13px] font-medium text-ink">Click to upload a featured image</p>
+                        <p className="text-[11px] text-ink-subtle mt-0.5">This thumbnail shows on the blog listing page</p>
+                      </div>
+                    </>
+                  )}
+                </label>
+                <div className="flex items-center gap-2">
+                  <div className="h-px flex-1 bg-line" />
+                  <span className="text-[11px] text-ink-subtle">or paste a URL</span>
+                  <div className="h-px flex-1 bg-line" />
+                </div>
+                <input
+                  type="url"
+                  className="input !text-[13px] w-full"
+                  placeholder="https://example.com/image.jpg"
+                  value={settings.featuredImage || ''}
+                  onChange={(e) => patch({ featuredImage: e.target.value })}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </div>
             )}
 
             {/* Title */}

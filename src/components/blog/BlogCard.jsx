@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clock, Tag, Calendar } from 'lucide-react';
+import { resolveMediaUrl } from '../../utils/media';
 
 function formatDate(d) {
   if (!d) return '';
@@ -14,7 +15,7 @@ export default function BlogCard({ post, featured = false }) {
       <Link to={href} className="group block">
         <div className="relative rounded-2xl overflow-hidden aspect-[16/9] bg-[#0E1B2C]">
           {post.featured_image
-            ? <img src={post.featured_image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            ? <img src={resolveMediaUrl(post.featured_image)} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
             : <div className="w-full h-full bg-gradient-to-br from-[#1a1a2e] to-[#16213e]" />
           }
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -52,7 +53,7 @@ export default function BlogCard({ post, featured = false }) {
       <div className="rounded-xl overflow-hidden border border-white/[0.07] bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-200 h-full flex flex-col">
         {post.featured_image && (
           <div className="aspect-video overflow-hidden bg-[#0E1B2C] shrink-0">
-            <img src={post.featured_image} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+            <img src={resolveMediaUrl(post.featured_image)} alt={post.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
           </div>
         )}
         <div className="p-5 flex flex-col flex-1">
