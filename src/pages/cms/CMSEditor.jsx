@@ -1,30 +1,83 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Eye, Images, Loader2 } from 'lucide-react';
+import {
+  ArrowLeft, Save, Eye, Loader2, Upload, X,
+  Tag, FolderOpen, FileText, Star, Pin, Globe, Edit3,
+  ChevronDown, ChevronUp,
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import BlogEditor from '../../components/editor/BlogEditor';
-import BlogSettings from '../../components/editor/BlogSettings';
 import MediaLibrary from '../../components/editor/MediaLibrary';
 import { blogAdminService } from '../../services';
-import { useAuth } from '../../context/AuthContext';
 
+// ── Sidebar helpers ───────────────────────────────────────────────────────────
+function Label({ children }) {
+  return <p className="text-[11px] font-semibold uppercase tracking-wide text-ink-subtle mb-1.5">{children}</p>;
+}
+
+function SeoSection({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const v = value || {};
+  return (
+    <div className="border-t border-line pt-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex items-center justify-between w-full text-[11px] font-semibold uppercase tracking-wide text-ink-subtle hover:text-ink transition-colors mb-1"
+      >
+        <span className="flex items-center gap-1.5"><Globe size={11} /> SEO Settings</span>
+        {open ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+      </button>
+      {open && (
+        <div className="space-y-3 mt-3">
+          <div>
+            <Label>Meta Title</Label>
+            <input className="input !text-[13px]" placeholder="60 chars max" maxLength={60}
+              value={v.metaTitle || ''} onChange={(e) => onChange({ metaTitle: e.target.value })} />
+            <p className="text-[10px] text-ink-subtle mt-1">{(v.metaTitle||'').length}/60</p>
+          </div>
+          <div>
+            <Label>Meta Description</Label>
+            <textarea className="input !text-[13px] resize-none" rows={3} placeholder="160 chars max" maxLength={160}
+              value={v.metaDescription || ''} onChange={(e) => onChange({ metaDescription: e.target.value })} />
+            <p className="text-[10px] text-ink-subtle mt-1">{(v.metaDescription||'').length}/160</p>
+          </div>
+          <div>
+            <Label>Focus Keyword</Label>
+            <input className="input !text-[13px]" placeholder="Primary keyword"
+              value={v.focusKeyword || ''} onChange={(e) => onChange({ focusKeyword: e.target.value })} />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export default function CMSEditor() {
-  const { id } = useParams();
+  const { id }   = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const isEdit = Boolean(id);
+  const isEdit   = Boolean(id);
 
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle]             = useState('');
+  const [content, setContent]         = useState('');
   const [contentJson, setContentJson] = useState(null);
-  const [settings, setSettings] = useState({ status: 'draft', tags: [] });
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(isEdit);
-  const [showMedia, setShowMedia] = useState(false);
-  const [dirty, setDirty] = useState(false);
-  const autoSaveRef = useRef(null);
+  const [settings, setSettings]       = useState({ status: 'draft', tags: [] });
+  const [categories, setCategories]   = useState([]);
+  const [tagInput, setTagInput]       = useState('');
+  const [saving, setSaving]           = useState(false);
+  const [loading, setLoading]         = useState(isEdit);
+  const [imgUploading, setImgUploading] = useState(false);
+  const [showMedia, setShowMedia]     = useState(false);
+  const [dirty, setDirty]             = useState(false);
+  const titleRef = useRef(null);
 
-  // Load existing post
+  // Load categories
+  useEffect(() => {
+    blogAdminService.categories().then(({ data }) => setCategories(data.data)).catch(() => {});
+  }, []);
+
+  // Load post if editing
   useEffect(() => {
     if (!isEdit) return;
     blogAdminService.post(id).then(({ data }) => {
@@ -46,92 +99,92 @@ export default function CMSEditor() {
         scheduledAt: p.scheduled_at,
         tags: (p.tags || []).map((t) => t.name),
       });
-    }).catch(() => toast.error('Failed to load post.'))
-      .finally(() => setLoading(false));
+    }).catch(() => toast.error('Failed to load post.')).finally(() => setLoading(false));
   }, [id, isEdit]);
 
-  const buildFormData = useCallback(() => {
+  const patch = (update) => { setSettings((s) => ({ ...s, ...update })); setDirty(true); };
+
+  // Featured image upload
+  const handleImageFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImgUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const { data } = await blogAdminService.uploadImage(fd);
+      patch({ featuredImage: data.data.url });
+    } catch { toast.error('Image upload failed.'); }
+    finally { setImgUploading(false); }
+  };
+
+  // Tags
+  const addTag = () => {
+    const t = tagInput.trim();
+    if (!t || settings.tags?.includes(t)) { setTagInput(''); return; }
+    patch({ tags: [...(settings.tags || []), t] });
+    setTagInput('');
+  };
+  const removeTag = (t) => patch({ tags: (settings.tags || []).filter((x) => x !== t) });
+
+  // Build FormData for save
+  const buildFormData = useCallback((overrides = {}) => {
     const fd = new FormData();
-    fd.append('title', title.trim());
+    const s  = { ...settings, ...overrides };
+    fd.append('title',   title.trim());
     fd.append('content', content);
     if (contentJson) fd.append('contentJson', JSON.stringify(contentJson));
-    if (settings.categoryId) fd.append('categoryId', settings.categoryId);
-    fd.append('status', settings.status || 'draft');
-    if (settings.excerpt) fd.append('excerpt', settings.excerpt);
-    if (settings.metaTitle) fd.append('metaTitle', settings.metaTitle);
-    if (settings.metaDescription) fd.append('metaDescription', settings.metaDescription);
-    if (settings.focusKeyword) fd.append('focusKeyword', settings.focusKeyword);
-    if (settings.featuredImage) fd.append('featuredImage', settings.featuredImage);
-    fd.append('isPinned', settings.isPinned || false);
-    fd.append('isFeatured', settings.isFeatured || false);
-    if (settings.scheduledAt) fd.append('scheduledAt', settings.scheduledAt);
-    if (settings.tags?.length) fd.append('tags', JSON.stringify(settings.tags));
+    fd.append('status',    s.status || 'draft');
+    if (s.status === 'published') fd.append('publishedAt', new Date().toISOString());
+    if (s.categoryId)      fd.append('categoryId',      s.categoryId);
+    if (s.excerpt)         fd.append('excerpt',         s.excerpt);
+    if (s.metaTitle)       fd.append('metaTitle',       s.metaTitle);
+    if (s.metaDescription) fd.append('metaDescription', s.metaDescription);
+    if (s.focusKeyword)    fd.append('focusKeyword',    s.focusKeyword);
+    if (s.featuredImage)   fd.append('featuredImage',   s.featuredImage);
+    fd.append('isPinned',   s.isPinned  || false);
+    fd.append('isFeatured', s.isFeatured || false);
+    if (s.scheduledAt)   fd.append('scheduledAt', s.scheduledAt);
+    if (s.tags?.length)  fd.append('tags', JSON.stringify(s.tags));
     return fd;
   }, [title, content, contentJson, settings]);
 
-  const save = useCallback(async (opts = {}) => {
-    if (!title.trim()) { toast.error('Title is required.'); return; }
+  const save = useCallback(async (overrides = {}, silent = false) => {
+    if (!title.trim()) { toast.error('Please add a title first.'); return; }
     setSaving(true);
     try {
-      const fd = buildFormData();
-      // Allow callers to force a status override (e.g. Publish button)
-      if (opts.status) {
-        fd.set('status', opts.status);
-        if (opts.status === 'published') fd.set('publishedAt', new Date().toISOString());
-      }
+      const fd = buildFormData(overrides);
       if (isEdit) {
         await blogAdminService.update(id, fd);
-        if (!opts.silent) {
-          if (opts.status === 'published') {
-            setSettings((s) => ({ ...s, status: 'published' }));
-            toast.success('Post published!');
-          } else {
-            toast.success('Post updated.');
-          }
-        }
+        if (!silent) toast.success(overrides.status === 'published' ? '🎉 Post published!' : 'Saved.');
       } else {
         const { data } = await blogAdminService.create(fd);
-        if (opts.status === 'published') {
-          setSettings((s) => ({ ...s, status: 'published' }));
-          toast.success('Post published!');
-        } else {
-          toast.success('Post created!');
-        }
+        toast.success(overrides.status === 'published' ? '🎉 Post published!' : 'Draft saved.');
         navigate(`/platform/blog/edit/${data.data.id}`, { replace: true });
       }
+      if (overrides.status) setSettings((s) => ({ ...s, status: overrides.status }));
       setDirty(false);
     } catch (err) {
-      const msg = err.response?.data?.message || 'Save failed.';
-      if (!opts.silent) toast.error(msg);
-    } finally {
-      setSaving(false);
-    }
+      if (!silent) toast.error(err.response?.data?.message || 'Save failed.');
+    } finally { setSaving(false); }
   }, [buildFormData, id, isEdit, navigate, title]);
 
-  // Keyboard shortcut
+  // Ctrl/Cmd+S
   useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); }
-    };
+    const handler = (e) => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); save(); } };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [save]);
 
-  const handleEditorChange = ({ html, json }) => {
-    setContent(html);
-    setContentJson(json);
-    setDirty(true);
-  };
-
+  // Auto-save drafts
+  const handleEditorChange = ({ html, json }) => { setContent(html); setContentJson(json); setDirty(true); };
   const handleAutoSave = useCallback(async ({ html, json }) => {
-    if (!isEdit || !title.trim()) return;
-    setContent(html);
-    setContentJson(json);
-    // Silent save only for drafts
-    if (settings.status === 'draft') {
-      await save({ silent: true });
-    }
+    if (!isEdit || !title.trim() || settings.status !== 'draft') return;
+    setContent(html); setContentJson(json);
+    await save({}, true);
   }, [isEdit, title, settings.status, save]);
+
+  const isPublished = settings.status === 'published';
 
   if (loading) {
     return (
@@ -143,86 +196,242 @@ export default function CMSEditor() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] -mx-4 lg:-mx-6 -mt-4 lg:-mt-6">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-line bg-surface shrink-0">
+
+      {/* ── Top bar ──────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 px-5 h-14 border-b border-line bg-surface shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/platform/blog')} className="btn-ghost !p-1.5 shrink-0">
+          <button onClick={() => navigate('/platform/blog/posts')} className="btn-ghost !p-1.5 shrink-0" title="Back to posts">
             <ArrowLeft size={17} />
           </button>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => { setTitle(e.target.value); setDirty(true); }}
-            placeholder="Post title…"
-            className="text-[18px] font-semibold text-ink bg-transparent border-none outline-none w-full min-w-0 placeholder:text-ink-subtle"
-          />
+          <span className="text-[13px] text-ink-muted hidden sm:block truncate max-w-xs">
+            {title.trim() || 'New Post'}
+          </span>
+          {/* Status pill */}
+          <span className={`hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border shrink-0
+            ${isPublished
+              ? 'bg-success/10 text-success border-success/25'
+              : 'bg-surface-2 text-ink-muted border-line'}`}>
+            {isPublished ? <Globe size={9} /> : <Edit3 size={9} />}
+            {settings.status}
+          </span>
         </div>
+
         <div className="flex items-center gap-2 shrink-0">
-          {dirty && <span className="text-[11px] text-ink-subtle hidden sm:block">Unsaved changes</span>}
-          <button onClick={() => setShowMedia(true)} className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
-            <Images size={14} /> Media
-          </button>
-          {settings.status === 'published' && (
-            <a href={`/blog/${settings.slug || id}`} target="_blank" rel="noopener noreferrer" className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
-              <Eye size={14} /> View
+          {dirty && <span className="text-[11px] text-ink-subtle hidden md:block">Unsaved</span>}
+
+          {isPublished && (
+            <a href={`/blog/${settings.slug}`} target="_blank" rel="noopener noreferrer"
+              className="btn-ghost !py-1.5 !px-3 !text-xs gap-1.5" title="View live post">
+              <Eye size={13} /> View
             </a>
           )}
-          {/* Save Draft — always available */}
-          <button onClick={() => save()} disabled={saving} className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
-            {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+
+          <button onClick={() => save()} disabled={saving}
+            className="btn-secondary !py-1.5 !px-3 !text-xs gap-1.5">
+            {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
             {saving ? 'Saving…' : 'Save Draft'}
           </button>
-          {/* Publish / Update */}
-          {settings.status !== 'published' ? (
-            <button
-              onClick={() => save({ status: 'published' })}
-              disabled={saving}
-              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5"
-            >
-              {saving ? <Loader2 size={13} className="animate-spin" /> : <Eye size={13} />}
-              Publish
+
+          {!isPublished ? (
+            <button onClick={() => save({ status: 'published' })} disabled={saving}
+              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5">
+              <Globe size={12} /> Publish
             </button>
           ) : (
-            <button
-              onClick={() => save()}
-              disabled={saving}
-              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5"
-            >
-              {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-              {saving ? 'Saving…' : 'Update'}
+            <button onClick={() => save()} disabled={saving}
+              className="btn-primary !py-1.5 !px-4 !text-xs gap-1.5">
+              {saving ? <Loader2 size={12} className="animate-spin" /> : <Save size={12} />}
+              Update
             </button>
           )}
         </div>
       </div>
 
-      {/* Body: editor + settings panel */}
-      <div className="flex flex-1 min-h-0">
-        {/* Editor */}
-        <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
-          <BlogEditor
-            content={content}
-            onChange={handleEditorChange}
-            onSave={handleAutoSave}
-          />
+      {/* ── Body ─────────────────────────────────────────────── */}
+      <div className="flex flex-1 min-h-0 overflow-hidden">
+
+        {/* ── Editor column ────────────────────────────────── */}
+        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+
+          {/* Featured image zone */}
+          <div className="px-8 pt-6 shrink-0">
+            {settings.featuredImage ? (
+              /* Preview */
+              <div className="relative rounded-xl overflow-hidden bg-surface-2 mb-5 group" style={{ aspectRatio: '16/7', maxHeight: 280 }}>
+                <img src={settings.featuredImage} alt="Featured" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <label className="btn-secondary !text-xs cursor-pointer gap-1.5 !bg-white/90 !text-ink">
+                    <Upload size={12} /> Change
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                  </label>
+                  <button onClick={() => patch({ featuredImage: '' })}
+                    className="btn-secondary !text-xs gap-1.5 !bg-white/90 !text-danger">
+                    <X size={12} /> Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Upload zone */
+              <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
+                border-line hover:border-primary/40 hover:bg-primary-soft/20 cursor-pointer transition-all mb-5
+                ${imgUploading ? 'opacity-60 pointer-events-none' : ''}`}
+                style={{ height: 120 }}>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                {imgUploading ? (
+                  <Loader2 size={22} className="animate-spin text-primary" />
+                ) : (
+                  <>
+                    <div className="w-10 h-10 rounded-xl bg-primary-soft flex items-center justify-center">
+                      <Upload size={18} className="text-primary" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[13px] font-medium text-ink">Add featured image</p>
+                      <p className="text-[11px] text-ink-subtle mt-0.5">Click to upload · This image shows on the blog listing page</p>
+                    </div>
+                  </>
+                )}
+              </label>
+            )}
+
+            {/* Title */}
+            <textarea
+              ref={titleRef}
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); setDirty(true); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }}
+              placeholder="Post title…"
+              rows={1}
+              className="w-full text-[28px] sm:text-[34px] font-bold text-ink bg-transparent border-none outline-none resize-none overflow-hidden placeholder:text-ink-subtle leading-tight mb-4"
+              style={{ lineHeight: 1.2 }}
+            />
+          </div>
+
+          {/* Rich text editor */}
+          <div className="flex-1 min-h-0 flex flex-col overflow-hidden border-t border-line">
+            <BlogEditor
+              content={content}
+              onChange={handleEditorChange}
+              onSave={handleAutoSave}
+            />
+          </div>
         </div>
 
-        {/* Settings panel */}
-        <div className="w-72 xl:w-80 shrink-0 overflow-hidden flex flex-col">
-          <BlogSettings
-            value={settings}
-            onChange={(patch) => { setSettings(patch); setDirty(true); }}
-          />
-        </div>
+        {/* ── Settings sidebar ─────────────────────────────── */}
+        <aside className="w-64 xl:w-72 shrink-0 bg-surface border-l border-line flex flex-col overflow-y-auto">
+          <div className="px-4 py-3.5 border-b border-line shrink-0">
+            <p className="text-[13px] font-semibold text-ink">Post Settings</p>
+          </div>
+
+          <div className="flex-1 px-4 py-4 space-y-5 overflow-y-auto">
+
+            {/* Featured image URL fallback */}
+            <div>
+              <Label>Featured Image URL</Label>
+              <input
+                type="url"
+                className="input !text-[12px]"
+                placeholder="Or paste an image URL here…"
+                value={settings.featuredImage || ''}
+                onChange={(e) => patch({ featuredImage: e.target.value })}
+              />
+              <p className="text-[10px] text-ink-subtle mt-1">This is the thumbnail shown in the blog listing.</p>
+            </div>
+
+            {/* Category */}
+            <div>
+              <Label><span className="flex items-center gap-1"><FolderOpen size={10} /> Category</span></Label>
+              <select className="input !text-[13px]" value={settings.categoryId || ''}
+                onChange={(e) => patch({ categoryId: e.target.value })}>
+                <option value="">No category</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <Label><span className="flex items-center gap-1"><Tag size={10} /> Tags</span></Label>
+              <div className="flex gap-1.5">
+                <input
+                  className="input flex-1 !text-[13px]"
+                  placeholder="e.g. GST, Finance…"
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                />
+                <button type="button" onClick={addTag} className="btn-secondary !px-2.5 !text-xs">Add</button>
+              </div>
+              {settings.tags?.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2">
+                  {settings.tags.map((t) => (
+                    <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-soft text-primary text-[11px] font-medium border border-primary/20">
+                      {t}
+                      <button type="button" onClick={() => removeTag(t)} className="hover:text-danger ml-0.5"><X size={9} /></button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Excerpt */}
+            <div>
+              <Label><span className="flex items-center gap-1"><FileText size={10} /> Excerpt</span></Label>
+              <textarea
+                className="input !text-[12px] resize-none"
+                rows={3}
+                placeholder="A short summary shown on the blog listing page…"
+                value={settings.excerpt || ''}
+                onChange={(e) => patch({ excerpt: e.target.value })}
+              />
+            </div>
+
+            {/* Visibility options */}
+            <div className="space-y-2.5">
+              <Label>Options</Label>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" checked={settings.isFeatured || false}
+                  onChange={(e) => patch({ isFeatured: e.target.checked })}
+                  className="w-3.5 h-3.5 rounded accent-primary" />
+                <div>
+                  <p className="text-[12px] font-medium text-ink flex items-center gap-1"><Star size={11} className="text-warning" /> Feature this post</p>
+                  <p className="text-[10px] text-ink-subtle">Shows at the top of the blog page</p>
+                </div>
+              </label>
+              <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                <input type="checkbox" checked={settings.isPinned || false}
+                  onChange={(e) => patch({ isPinned: e.target.checked })}
+                  className="w-3.5 h-3.5 rounded accent-primary" />
+                <div>
+                  <p className="text-[12px] font-medium text-ink flex items-center gap-1"><Pin size={11} /> Pin to top</p>
+                  <p className="text-[10px] text-ink-subtle">Always appears first in the list</p>
+                </div>
+              </label>
+            </div>
+
+            {/* Divider + publish status */}
+            <div className="border-t border-line pt-4">
+              <Label>Publish Status</Label>
+              <div className={`flex items-center gap-2 p-3 rounded-lg border text-[12px] font-medium
+                ${isPublished ? 'bg-success/5 border-success/20 text-success' : 'bg-surface-2 border-line text-ink-muted'}`}>
+                {isPublished ? <Globe size={13} /> : <Edit3 size={13} />}
+                {isPublished ? 'Published — visible to everyone' : 'Draft — not visible to the public'}
+              </div>
+              {isPublished && settings.slug && (
+                <a href={`/blog/${settings.slug}`} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[11px] text-primary hover:underline mt-2">
+                  <Eye size={10} /> View live post
+                </a>
+              )}
+            </div>
+
+            {/* SEO — collapsed by default */}
+            <SeoSection value={settings} onChange={patch} />
+          </div>
+        </aside>
       </div>
 
-      {/* Media library modal */}
+      {/* Media library */}
       {showMedia && (
         <MediaLibrary
-          onSelect={(url) => {
-            // Insert into editor via clipboard-style approach
-            toast.success('Image URL copied — paste into editor.');
-            navigator.clipboard?.writeText(url);
-          }}
+          onSelect={(url) => { navigator.clipboard?.writeText(url); toast.success('Image URL copied — paste into editor.'); }}
           onClose={() => setShowMedia(false)}
         />
       )}
