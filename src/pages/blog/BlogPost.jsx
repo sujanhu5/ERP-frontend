@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
-import { Clock, Calendar, Tag, ArrowLeft, ArrowRight, Heart } from 'lucide-react';
+import { Clock, Calendar, Tag, ArrowLeft, Heart, Send, MessageCircle } from 'lucide-react';
 import { blogPublicService } from '../../services';
 import ReadingProgress from '../../components/blog/ReadingProgress';
 import TableOfContents from '../../components/blog/TableOfContents';
@@ -9,18 +9,138 @@ import BlogCard from '../../components/blog/BlogCard';
 import Logo from '../../components/common/Logo';
 import { resolveMediaUrl } from '../../utils/media';
 
+const INSTA_URL = 'https://www.instagram.com/maxmatrix.in?igsh=MWVpNXptb2prajhhOA==';
+
+function InstagramIcon({ size = 18 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}
+
 function formatDate(d) {
   if (!d) return '';
   return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function formatCommentDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function CommentsSection({ slug }) {
+  const [comments, setComments] = useState([]);
+  const [name, setName]         = useState('');
+  const [text, setText]         = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted]   = useState(false);
+  const [error, setError]           = useState('');
+
+  useEffect(() => {
+    blogPublicService.comments(slug)
+      .then(({ data }) => setComments(data.data))
+      .catch(() => {});
+  }, [slug]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!name.trim()) { setError('Please enter your name.'); return; }
+    if (!text.trim()) { setError('Please write a comment.'); return; }
+    setSubmitting(true);
+    try {
+      const { data } = await blogPublicService.addComment(slug, { name: name.trim(), content: text.trim() });
+      setComments((prev) => [...prev, data.data]);
+      setName('');
+      setText('');
+      setSubmitted(true);
+      setTimeout(() => setSubmitted(false), 4000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to post comment. Try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-16">
+      <h2 className="text-[20px] font-bold text-white mb-6 flex items-center gap-2">
+        <MessageCircle size={20} className="text-primary" />
+        {comments.length > 0 ? `${comments.length} Comment${comments.length !== 1 ? 's' : ''}` : 'Comments'}
+      </h2>
+
+      {/* Comment list */}
+      {comments.length > 0 && (
+        <div className="space-y-4 mb-10">
+          {comments.map((c) => (
+            <div key={c.id} className="flex gap-4">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary text-[13px] font-bold shrink-0 mt-0.5">
+                {c.name?.[0]?.toUpperCase() || '?'}
+              </div>
+              <div className="flex-1 bg-white/[0.03] border border-white/[0.07] rounded-xl px-4 py-3">
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-[13px] font-semibold text-white">{c.name}</span>
+                  <span className="text-[11px] text-white/30">{formatCommentDate(c.created_at)}</span>
+                </div>
+                <p className="text-[13px] text-white/70 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {comments.length === 0 && (
+        <p className="text-white/30 text-[13px] mb-8">Be the first to leave a comment!</p>
+      )}
+
+      {/* Comment form */}
+      <form onSubmit={handleSubmit} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5 space-y-4">
+        <p className="text-[13px] font-semibold text-white/70">Leave a comment</p>
+
+        <input
+          type="text"
+          placeholder="Your name *"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          maxLength={100}
+          className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-4 py-2.5 text-[13px] text-white placeholder:text-white/30 outline-none focus:border-primary/50 transition-colors"
+        />
+
+        <textarea
+          placeholder="Write your comment…"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          rows={4}
+          maxLength={2000}
+          className="w-full bg-white/[0.05] border border-white/[0.1] rounded-lg px-4 py-2.5 text-[13px] text-white placeholder:text-white/30 outline-none focus:border-primary/50 transition-colors resize-none"
+        />
+
+        {error && <p className="text-red-400 text-[12px]">{error}</p>}
+        {submitted && <p className="text-green-400 text-[12px]">Comment posted!</p>}
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-primary hover:bg-primary/90 text-white text-[13px] font-medium transition-colors disabled:opacity-50"
+        >
+          <Send size={13} />
+          {submitting ? 'Posting…' : 'Post Comment'}
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export default function BlogPost() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const [post, setPost] = useState(null);
+  const [post, setPost]       = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked]     = useState(false);
   const [likeCount, setLikeCount] = useState(0);
 
   useEffect(() => {
@@ -83,8 +203,10 @@ export default function BlogPost() {
       {/* Content layout */}
       <div className="max-w-6xl mx-auto px-5 py-10">
         <div className="flex gap-12 justify-center">
+
           {/* Article */}
           <article className="flex-1 min-w-0 max-w-[740px]">
+
             {/* Meta */}
             <div className="mb-6">
               {post.category_name && (
@@ -143,7 +265,7 @@ export default function BlogPost() {
               <button
                 onClick={handleLike}
                 className={`flex items-center gap-2 px-4 py-2 rounded-full border transition-all text-[13px]
-                  ${liked ? 'bg-danger/20 border-danger/40 text-danger' : 'bg-white/[0.05] border-white/[0.1] text-white/60 hover:border-white/30 hover:text-white'}`}
+                  ${liked ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.05] border-white/[0.1] text-white/60 hover:border-white/30 hover:text-white'}`}
               >
                 <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
                 {likeCount} {likeCount === 1 ? 'like' : 'likes'}
@@ -166,6 +288,26 @@ export default function BlogPost() {
               </div>
             )}
 
+            {/* Comments */}
+            <CommentsSection slug={slug} />
+
+            {/* Instagram follow banner */}
+            <a
+              href={INSTA_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-12 flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-orange-900/30 border border-pink-500/20 hover:border-pink-500/40 transition-all group"
+            >
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                <InstagramIcon size={22} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold text-white">Follow us on Instagram</p>
+                <p className="text-[12px] text-white/50 mt-0.5">@maxmatrix.in · Updates, tips &amp; behind the scenes</p>
+              </div>
+              <span className="text-[12px] text-pink-400 font-medium shrink-0 group-hover:underline">Follow →</span>
+            </a>
+
             {/* Related posts */}
             {related.length > 0 && (
               <div className="mt-16">
@@ -176,7 +318,7 @@ export default function BlogPost() {
               </div>
             )}
 
-            {/* Prev / Next nav placeholder */}
+            {/* Back nav */}
             <div className="mt-12 pt-8 border-t border-white/[0.08] flex justify-between">
               <Link to="/blog" className="flex items-center gap-2 text-[13px] text-white/40 hover:text-white transition-colors">
                 <ArrowLeft size={15} /> Back to Blog
@@ -191,6 +333,12 @@ export default function BlogPost() {
 
       {/* Footer */}
       <footer className="border-t border-white/[0.06] mt-20 py-8 text-center text-white/30 text-[12px]">
+        <div className="flex items-center justify-center gap-4 mb-3">
+          <a href={INSTA_URL} target="_blank" rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-white/30 hover:text-pink-400 transition-colors">
+            <InstagramIcon size={13} /> maxmatrix.in
+          </a>
+        </div>
         <p>© {new Date().getFullYear()} Maxmatrix · <Link to="/" className="hover:text-white/60">Home</Link> · <Link to="/blog" className="hover:text-white/60">Blog</Link></p>
       </footer>
     </div>

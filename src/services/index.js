@@ -114,6 +114,8 @@ export const blogPublicService = {
   like: (slug) => api.post(`/blog/public/posts/${slug}/like`),
   categories: () => api.get('/blog/public/categories'),
   tags: () => api.get('/blog/public/tags'),
+  comments: (slug) => api.get(`/blog/public/posts/${slug}/comments`),
+  addComment: (slug, payload) => api.post(`/blog/public/posts/${slug}/comments`, payload),
 };
 
 export const blogAdminService = {
