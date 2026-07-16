@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, Save, Eye, Loader2, Upload, X,
   Tag, FolderOpen, FileText, Star, Pin, Globe, Edit3,
-  ChevronDown, ChevronUp, GripVertical, Clock, Calendar,
+  ChevronDown, ChevronUp, GripVertical, Clock, Calendar, User, MessageCircle, Trash2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import BlogEditor from '../../components/editor/BlogEditor';
@@ -63,7 +63,8 @@ export default function CMSEditor() {
   const [title, setTitle]             = useState('');
   const [content, setContent]         = useState('');
   const [contentJson, setContentJson] = useState(null);
-  const [settings, setSettings]       = useState({ status: 'draft', tags: [] });
+  const [settings, setSettings]       = useState({ status: 'draft', tags: [], authorDisplayName: '' });
+  const [comments, setComments]       = useState([]);
   const [categories, setCategories]   = useState([]);
   const [tagInput, setTagInput]       = useState('');
   const [saving, setSaving]           = useState(false);
@@ -101,6 +102,12 @@ export default function CMSEditor() {
     blogAdminService.categories().then(({ data }) => setCategories(data.data)).catch(() => {});
   }, []);
 
+  // Load comments for existing post
+  useEffect(() => {
+    if (!isEdit) return;
+    blogAdminService.postComments(id).then(({ data }) => setComments(data.data)).catch(() => {});
+  }, [id, isEdit]);
+
   // Load post if editing
   useEffect(() => {
     if (!isEdit) return;
@@ -114,6 +121,7 @@ export default function CMSEditor() {
         slug: p.slug,
         categoryId: p.category_id,
         featuredImage: p.featured_image,
+        authorDisplayName: p.author_display_name || '',
         excerpt: p.excerpt,
         metaTitle: p.meta_title,
         metaDescription: p.meta_description,
@@ -160,6 +168,7 @@ export default function CMSEditor() {
     if (contentJson) fd.append('contentJson', JSON.stringify(contentJson));
     fd.append('status',    s.status || 'draft');
     if (s.status === 'published') fd.append('publishedAt', new Date().toISOString());
+    fd.append('authorDisplayName', s.authorDisplayName || '');
     if (s.categoryId)      fd.append('categoryId',      s.categoryId);
     if (s.excerpt)         fd.append('excerpt',         s.excerpt);
     if (s.metaTitle)       fd.append('metaTitle',       s.metaTitle);
@@ -382,6 +391,18 @@ export default function CMSEditor() {
 
           <div className="flex-1 px-4 py-4 space-y-5 overflow-y-auto">
 
+            {/* Author */}
+            <div>
+              <Label><span className="flex items-center gap-1"><User size={10} /> Author Name</span></Label>
+              <input
+                className="input !text-[13px]"
+                placeholder="e.g. Sujan Humagain"
+                value={settings.authorDisplayName || ''}
+                onChange={(e) => patch({ authorDisplayName: e.target.value })}
+              />
+              <p className="text-[10px] text-ink-subtle mt-1">Shown at the bottom of the published post.</p>
+            </div>
+
             {/* Featured image URL fallback */}
             <div>
               <Label>Featured Image URL</Label>
@@ -483,6 +504,45 @@ export default function CMSEditor() {
 
             {/* SEO — collapsed by default */}
             <SeoSection value={settings} onChange={patch} />
+
+            {/* Comments — only when editing */}
+            {isEdit && (
+              <div className="border-t border-line pt-4">
+                <Label>
+                  <span className="flex items-center gap-1">
+                    <MessageCircle size={10} /> Comments ({comments.length})
+                  </span>
+                </Label>
+                {comments.length === 0 ? (
+                  <p className="text-[11px] text-ink-subtle">No comments yet.</p>
+                ) : (
+                  <div className="space-y-2 mt-1">
+                    {comments.map((c) => (
+                      <div key={c.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-surface-2 border border-line">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] font-semibold text-ink truncate">{c.name}</p>
+                          <p className="text-[11px] text-ink-muted mt-0.5 line-clamp-2">{c.content}</p>
+                        </div>
+                        <button
+                          onClick={async () => {
+                            if (!window.confirm('Delete this comment?')) return;
+                            try {
+                              await blogAdminService.deleteComment(c.id);
+                              setComments((prev) => prev.filter((x) => x.id !== c.id));
+                              toast.success('Comment deleted.');
+                            } catch { toast.error('Delete failed.'); }
+                          }}
+                          className="shrink-0 text-ink-subtle hover:text-danger transition-colors p-0.5"
+                          title="Delete comment"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </aside>
       </div>

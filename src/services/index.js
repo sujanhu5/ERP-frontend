@@ -135,6 +135,9 @@ export const blogAdminService = {
   // Tags
   tags: () => api.get('/blog/admin/tags'),
   deleteTag: (id) => api.delete(`/blog/admin/tags/${id}`),
+  // Comments
+  postComments: (postId) => api.get(`/blog/admin/posts/${postId}/comments`),
+  deleteComment: (commentId) => api.delete(`/blog/admin/comments/${commentId}`),
   // Media
   images: (params) => api.get('/blog/admin/images', { params }),
   uploadImage: (formData) => api.post('/blog/admin/images', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
