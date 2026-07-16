@@ -315,41 +315,24 @@ export default function CMSEditor() {
                 </button>
               </div>
             ) : (
-              /* Upload zone + URL paste */
-              <div className="mb-5 space-y-2">
-                <label className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed
-                  border-line hover:border-primary/40 hover:bg-primary-soft/20 cursor-pointer transition-all
-                  ${imgUploading ? 'opacity-60 pointer-events-none' : ''}`}
-                  style={{ height: 110 }}>
-                  <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
-                  {imgUploading ? (
-                    <Loader2 size={22} className="animate-spin text-primary" />
-                  ) : (
-                    <>
-                      <div className="w-9 h-9 rounded-xl bg-primary-soft flex items-center justify-center">
-                        <Upload size={16} className="text-primary" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-[13px] font-medium text-ink">Click to upload a featured image</p>
-                        <p className="text-[11px] text-ink-subtle mt-0.5">This thumbnail shows on the blog listing page</p>
-                      </div>
-                    </>
-                  )}
-                </label>
-                <div className="flex items-center gap-2">
-                  <div className="h-px flex-1 bg-line" />
-                  <span className="text-[11px] text-ink-subtle">or paste a URL</span>
-                  <div className="h-px flex-1 bg-line" />
+              /* Compact upload zone — URL paste is in the sidebar */
+              <label className={`flex items-center gap-3 mb-4 px-4 rounded-xl border-2 border-dashed
+                border-line hover:border-primary/40 hover:bg-primary-soft/20 cursor-pointer transition-all
+                ${imgUploading ? 'opacity-60 pointer-events-none' : ''}`}
+                style={{ height: 64 }}>
+                <input type="file" accept="image/*" className="hidden" onChange={handleImageFile} disabled={imgUploading} />
+                {imgUploading ? (
+                  <Loader2 size={18} className="animate-spin text-primary" />
+                ) : (
+                  <div className="w-7 h-7 rounded-lg bg-primary-soft flex items-center justify-center shrink-0">
+                    <Upload size={13} className="text-primary" />
+                  </div>
+                )}
+                <div>
+                  <p className="text-[13px] font-medium text-ink">Click to upload a featured image</p>
+                  <p className="text-[11px] text-ink-subtle">Or paste a URL in the sidebar</p>
                 </div>
-                <input
-                  type="url"
-                  className="input !text-[13px] w-full"
-                  placeholder="https://example.com/image.jpg"
-                  value={settings.featuredImage || ''}
-                  onChange={(e) => patch({ featuredImage: e.target.value })}
-                  onClick={(e) => e.stopPropagation()}
-                />
-              </div>
+              </label>
             )}
 
             {/* Title */}

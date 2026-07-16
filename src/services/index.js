@@ -16,8 +16,10 @@ export const platformService = {
   health: () => api.get('/platform/health'),
   companies: (params) => api.get('/platform/companies', { params }),
   company: (id) => api.get(`/platform/companies/${id}`),
+  companyUsers: (id) => api.get(`/platform/companies/${id}/users`),
   setStatus: (id, status) => api.patch(`/platform/companies/${id}/status`, { status }),
   resetPassword: (id) => api.post(`/platform/companies/${id}/reset-password`),
+  setUserPassword: (userId, password) => api.put(`/platform/users/${userId}/password`, { password }),
   remove: (id) => api.delete(`/platform/companies/${id}`),
   auditLogs: (params) => api.get('/platform/audit-logs', { params }),
 };
